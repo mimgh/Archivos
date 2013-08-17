@@ -1,0 +1,65 @@
+<html>
+    <head>
+        <title>archivos</title>
+        <script>
+            function ready() {
+                document.addEventListener("deviceready", function() {
+                    document.getElementById("leer").addEventListener("click", function() {
+                        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+                        function gotFS(fileSystem) {
+                            fileSystem.root.getFile("readme.txt", null, gotFileEntry, fail);
+                        }
+                        function gotFileEntry(fileEntry) {
+                            fileEntry.file(readAsText, fail);
+                        }
+                        function readAsText(file) {
+                            var reader = new FileReader();
+                            reader.onloadend = function(evt) {
+                                console.log("Read as text");
+                                alert(evt.target.result);
+                            };
+                            document.getElementById("verArchivo").innerHTML = reader.readAsText(file);
+                        }
+                        function fail(evt) {
+                            console.log(evt.target.error.code);
+                        }
+                    }, false);
+                    document.getElementById("sobreEscribir").addEventListener("click", function() {
+                        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
+                        function gotFS(fileSystem) {
+                            fileSystem.root.getFile("readme.txt", {create:true,exclusive:false}, gotFileEntry, fail);
+                        }
+                        function gotFileEntry(fileEntry) {
+                            fileEntry.createWriter(sobreEscribir, fail);
+                        }
+                        function sobreEscribir(writer) {
+                            writer.onwriteend = function(evt) {
+                                console.log("contents of file now 'some sample text'");
+                                writer.truncate(11);  
+                                writer.onwriteend = function(evt) {
+                                    console.log("contents of file now 'some sample'");
+                                    writer.seek(4);
+                                    writer.write(" different text");
+                                    writer.onwriteend = function(evt) {
+                                        console.log("contents of file now 'some different text'");
+                                    }
+                                };
+                            };
+                            writer.write("some sample text");
+                        }
+                        function fail(evt) {
+                            console.log(evt.target.error.code);
+                        }
+                    }, false);
+                }, false);
+            }
+        </script>
+    </head>
+    <body onload="ready();">
+        <textarea id="verArchivo" style="width:100%;height:150px"></textarea><br>
+        <button id="leer">Leer</button><br>
+        <textarea id="escribirArchivo" style="width:100%;height:150px"></textarea><br>
+        <button id="sobreEscribir">Reemplazar</button> <button id="add">Agregar</button><br>
+
+    </body>
+</html>
